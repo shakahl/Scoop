@@ -519,8 +519,6 @@ function Invoke-ExternalCommand {
             $ArgumentList += "/lwe `"$LogName`""
         } else {
             $redirectToLogFile = $true
-            $Process.StartInfo.RedirectStandardOutput = $true
-            $Process.StartInfo.RedirectStandardError = $true
         }
     }
     if ($RunAs) {
@@ -528,6 +526,8 @@ function Invoke-ExternalCommand {
         $Process.StartInfo.Verb = 'RunAs'
     } else {
         $Process.StartInfo.CreateNoWindow = $true
+        $Process.StartInfo.RedirectStandardOutput = $true
+        $Process.StartInfo.RedirectStandardError = $true
     }
     if ($EnvironmentVariables) {
         $EnvironmentVariables.GetEnumerator() | ForEach-Object { $Process.StartInfo.EnvironmentVariables.Add($_.Key, $_.Value) }
@@ -562,16 +562,17 @@ function Invoke-ExternalCommand {
         error $_.Exception.Message
         return $false
     }
-    if ($redirectToLogFile) {
-        # we do this to remove a deadlock potential
-        # ref: https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.standardoutput?view=netframework-4.5#remarks
-        $stdoutTask = $Process.StandardOutput.ReadToEndAsync()
-        $stderrTask = $Process.StandardError.ReadToEndAsync()
-    }
+    # we do this to remove a deadlock potential
+    # ref: https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.standardoutput?view=netframework-4.5#remarks
+    $stdoutTask = $Process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $Process.StandardError.ReadToEndAsync()
     $Process.WaitForExit()
     if ($redirectToLogFile) {
         Out-UTF8File -FilePath $LogName -Append -InputObject $stdoutTask.Result
         Out-UTF8File -FilePath $LogName -Append -InputObject $stderrTask.Result
+    } else {
+        $stdoutTask.Result | Out-Default
+        $stderrTask.Result | Out-Default
     }
     if ($Process.ExitCode -ne 0) {
         if ($ContinueExitCodes -and ($ContinueExitCodes.ContainsKey($Process.ExitCode))) {
