@@ -490,6 +490,9 @@ function Invoke-ExternalCommand {
         [Alias('Args')]
         [String[]]
         $ArgumentList,
+        [Parameter(ParameterSetName = 'Default')]
+        [String]
+        $WorkingDirectory,
         [Parameter(ParameterSetName = 'UseShellExecute')]
         [Switch]
         $RunAs,
@@ -528,6 +531,9 @@ function Invoke-ExternalCommand {
         $Process.StartInfo.CreateNoWindow = $true
         $Process.StartInfo.RedirectStandardOutput = $true
         $Process.StartInfo.RedirectStandardError = $true
+        if ($WorkingDirectory) {
+            $Process.StartInfo.WorkingDirectory = ensure $WorkingDirectory
+        }
     }
     if ($EnvironmentVariables) {
         $EnvironmentVariables.GetEnumerator() | ForEach-Object { $Process.StartInfo.EnvironmentVariables.Add($_.Key, $_.Value) }
