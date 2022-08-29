@@ -579,8 +579,12 @@ function Invoke-ExternalCommand {
         Out-UTF8File -FilePath $LogName -Append -InputObject $stdoutTask.Result
         Out-UTF8File -FilePath $LogName -Append -InputObject $stderrTask.Result
     } else {
-        $stdoutTask.Result | Out-Default
-        $stderrTask.Result | Out-Default
+        if ($stdoutTask.Result) {
+            $stdoutTask.Result.Trim() | Out-Default
+        }
+        if ($stderrTask.Result) {
+            $stderrTask.Result.Trim() | Out-Default
+        }
     }
     if ($Process.ExitCode -ne 0) {
         if ($ContinueExitCodes -and ($ContinueExitCodes.ContainsKey($Process.ExitCode))) {
