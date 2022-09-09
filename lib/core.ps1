@@ -473,11 +473,46 @@ function is_local($path) {
 # operations
 
 function run($exe, $arg, $msg, $continue_exit_codes) {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-ExternalCommand'
-    Invoke-ExternalCommand -FilePath $exe -ArgumentList $arg -Prompt $msg -ContinueExitCodes $continue_exit_codes
+    Show-DeprecatedWarning $MyInvocation 'Start-ExternalProcess'
+    Start-ExternalProcess -FilePath $exe -ArgumentList $arg -Prompt $msg -ContinueExitCodes $continue_exit_codes
 }
 
 function Invoke-ExternalCommand {
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
+    [OutputType([Boolean])]
+    param (
+        [Parameter(Mandatory = $true, Position = 0)]
+        [Alias('Path')]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $FilePath,
+        [Parameter(Position = 1)]
+        [Alias('Args')]
+        [String[]]
+        $ArgumentList,
+        [Parameter(ParameterSetName = 'UseShellExecute')]
+        [Switch]
+        $RunAs,
+        [Alias('Msg')]
+        [String]
+        $Activity,
+        [Alias('cec')]
+        [Hashtable]
+        $ContinueExitCodes,
+        [Parameter(ParameterSetName = 'Default')]
+        [Alias('Log')]
+        [String]
+        $LogPath
+    )
+    Show-DeprecatedWarning $MyInvocation 'Start-ExternalProcess'
+    if ($RunAs) {
+        Start-ExternalProcess -FilePath $FilePath -ArgumentList $ArgumentList -Prompt $Activity -ContinueExitCodes $ContinueExitCodes -RunAs
+    } else {
+        Start-ExternalProcess -FilePath $FilePath -ArgumentList $ArgumentList -Prompt $Activity -ContinueExitCodes $ContinueExitCodes -LogName $LogPath
+    }
+}
+
+function Start-ExternalProcess {
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     [OutputType([Boolean])]
     param (
@@ -576,8 +611,8 @@ function Invoke-ExternalCommand {
     $stderrTask = $Process.StandardError.ReadToEndAsync()
     $Process.WaitForExit()
     if ($redirectToLogFile) {
-        Out-UTF8File -FilePath $LogName -Append -InputObject $stdoutTask.Result
-        Out-UTF8File -FilePath $LogName -Append -InputObject $stderrTask.Result
+        Out-UTF8File -FilePath $LogName -Append -InputObject $stdoutTask.Result.Trim()
+        Out-UTF8File -FilePath $LogName -Append -InputObject $stderrTask.Result.Trim()
     } else {
         if ($stdoutTask.Result) {
             $stdoutTask.Result.Trim() | Out-Default

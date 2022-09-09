@@ -41,7 +41,7 @@ function Expand-7zipArchive {
         'Skip' { $ArgList += '-aos' }
         'Rename' { $ArgList += '-aou' }
     }
-    $Status = Invoke-ExternalCommand $7zPath $ArgList -LogName $LogName
+    $Status = Start-ExternalProcess $7zPath $ArgList -LogName $LogName
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogName)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -53,7 +53,7 @@ function Expand-7zipArchive {
     }
     if ($IsTar) {
         # Check for tar
-        $Status = Invoke-ExternalCommand $7zPath @('l', $Path) -LogName $LogName
+        $Status = Start-ExternalProcess $7zPath @('l', $Path) -LogName $LogName
         if ($Status) {
             # get inner tar file name
             $TarFile = (Select-String -Path $LogName -Pattern '[^ ]*tar$').Matches.Value
@@ -106,7 +106,7 @@ function Expand-ZstdArchive {
         # Remove original archive file
         $ArgList += '--rm'
     }
-    $Status = Invoke-ExternalCommand $ZstdPath $ArgList -LogName $LogName
+    $Status = Start-ExternalProcess $ZstdPath $ArgList -LogName $LogName
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogName)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -157,7 +157,7 @@ function Expand-MsiArchive {
     if ($Switches) {
         $ArgList += (-split $Switches)
     }
-    $Status = Invoke-ExternalCommand $MsiPath $ArgList -LogName $LogName
+    $Status = Start-ExternalProcess $MsiPath $ArgList -LogName $LogName
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogName)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -209,7 +209,7 @@ function Expand-InnoArchive {
     if ($Switches) {
         $ArgList += (-split $Switches)
     }
-    $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $ArgList -LogName $LogName
+    $Status = Start-ExternalProcess (Get-HelperPath -Helper Innounp) $ArgList -LogName $LogName
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogName)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -271,7 +271,7 @@ function Expand-DarkArchive {
     if ($Switches) {
         $ArgList += (-split $Switches)
     }
-    $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Dark) $ArgList -LogName $LogName
+    $Status = Start-ExternalProcess (Get-HelperPath -Helper Dark) $ArgList -LogName $LogName
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogName)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
